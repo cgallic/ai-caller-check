@@ -1,0 +1,19 @@
+{
+  "name": "ai-caller-check",
+  "version": "0.1.0",
+  "description": "Can an AI assistant find, read and book this business? Zero-dependency CLI and self-hosted widget that checks robots.txt, bot walls, LocalBusiness schema, hours, tap-to-call, booking and price signals.",
+  "type": "module",
+  "bin": { "ai-caller-check": "bin/ai-caller-check.js" },
+  "main": "src/check.js",
+  "exports": { ".": "./src/check.js" },
+  "files": ["bin", "src", "widget", "server.js", "LICENSE", "README.md"],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "start": "node server.js"
+  },
+  "engines": { "node": ">=18" },
+  "keywords": ["ai-agents", "robots.txt", "local-seo", "schema-org", "chatgpt", "perplexity", "llms-txt", "aeo", "geo"],
+  "license": "Apache-2.0",
+  "author": "KaiCalls (https://www.kaicalls.com)",
+  "homepage": "https://answeredafterhours.com/ai-caller-check/"
+}

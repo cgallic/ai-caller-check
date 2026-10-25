@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Caller Check</title>
+<!--
+  Single-file widget. Served by server.js at /, or host it anywhere and point it
+  at a running checker: add data-endpoint="https://your-checker.example.com/api/check"
+  to the #acc element below. No trackers, no external scripts.
+-->
+<style>
+  :root { --bg:#fff; --ink:#16162a; --soft:#5b5b72; --line:#e3e3ee; --pass:#0f8a66; --warn:#a86b00; --fail:#c0352b; --accent:#5b3fd6; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111120; --ink:#ececf6; --soft:#a3a3bd; --line:#2a2a40; --pass:#3fd1a2; --warn:#f0b54a; --fail:#ff7468; --accent:#a893ff; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #acc { max-width:720px; margin:0 auto; padding:24px 16px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  p.sub { color:var(--soft); margin:0 0 16px; }
+  form { display:flex; gap:8px; flex-wrap:wrap; }
+  input { flex:1 1 220px; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--ink); font:inherit; }
+  button { padding:10px 18px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; font-weight:600; cursor:pointer; }
+  button:disabled { opacity:.6; cursor:wait; }
+  .score { font-size:2.4rem; font-weight:700; margin:20px 0 0; }
+  .grade { color:var(--soft); margin:0 0 12px; }
+  .check { border-top:1px solid var(--line); padding:10px 0; }
+  .check b { display:flex; justify-content:space-between; gap:12px; }
+  .check span.d { color:var(--soft); font-size:.92rem; }
+  .pass { color:var(--pass); } .warn { color:var(--warn); } .fail { color:var(--fail); }
+  .err { color:var(--fail); margin-top:12px; }
+  .cta { border:1px solid var(--line); border-radius:10px; padding:14px; margin-top:18px; }
+  .cta a { color:var(--accent); font-weight:600; }
+  .fine { color:var(--soft); font-size:.82rem; margin-top:14px; }
+</style>
+</head>
+<body>
+<div id="acc" data-endpoint="/api/check">
+  <h1>Can an AI assistant find, read and book this business?</h1>
+  <p class="sub">Checks robots.txt, bot walls, LocalBusiness schema, hours, tap-to-call, booking link, prices and llms.txt. Reads public pages only.</p>
+  <form id="f">
+    <input id="u" placeholder="yourcompany.com" inputmode="url" required aria-label="Website" />
+    <input id="p" placeholder="Phone (optional)" inputmode="tel" aria-label="Phone number" style="flex:0 1 180px" />
+    <button id="b">Check</button>
+  </form>
+  <div id="out" aria-live="polite"></div>
+</div>
+<script>
+(function () {
+  var root = document.getElementById("acc");
+  var endpoint = root.getAttribute("data-endpoint");
+  var out = document.getElementById("out");
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+  var utm = "utm_source=github&utm_medium=oss&utm_campaign=ai-caller-check&utm_content=widget";
+  document.getElementById("f").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var b = document.getElementById("b");
+    var url = document.getElementById("u").value.trim();
+    var phone = document.getElementById("p").value.trim();
+    b.disabled = true; b.textContent = "Checking...";
+    out.innerHTML = "";
+    fetch(endpoint + "?url=" + encodeURIComponent(url) + "&phone=" + encodeURIComponent(phone))
+      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (!r.ok) { out.innerHTML = '<p class="err">' + esc(r.message || r.error) + "</p>"; return; }
+        var h = '<p class="score">' + r.score + '<small>/100</small></p><p class="grade">' + esc(r.grade) + "</p>";
+        r.checks.forEach(function (c) {
+          h += '<div class="check"><b><span class="' + c.status + '">' + esc(c.label) + "</span><span>" + c.points + "/" + c.max + '</span></b><span class="d">' + esc(c.detail) + "</span></div>";
+        });
+        if (r.fixes.length) h += "<p><b>Top fix:</b> " + esc(r.fixes[0].title) + ". " + esc(r.fixes[0].body) + "</p>";
+        h += '<div class="cta">This checks your website, not what assistants say about you or what happens when one phones you. ' +
+             '<a href="https://answeredafterhours.com/ai-caller-check/?' + utm + '-report#report" target="_blank" rel="noopener">Get the full readiness report</a> or ' +
+             '<a href="https://www.kaicalls.com/?' + utm + '-kai" target="_blank" rel="noopener">have Kai answer your calls 24/7</a>.</div>';
+        h += '<p class="fine">' + esc(r.note) + "</p>";
+        out.innerHTML = h;
+      })
+      .catch(function () { out.innerHTML = '<p class="err">The checker did not respond. Is the server running?</p>'; })
+      .then(function () { b.disabled = false; b.textContent = "Check"; });
+  });
+})();
+</script>
+</body>
+</html>
